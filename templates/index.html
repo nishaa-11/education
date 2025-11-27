@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Video Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .char-count {
+            text-align: right;
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .button-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-section {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-section.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            color: #28a745;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .download-btn {
+            background: #28a745;
+            margin-top: 10px;
+        }
+
+        .download-btn:hover {
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .examples {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .examples h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .example-item {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: 1px solid #e0e0e0;
+        }
+
+        .example-item:hover {
+            background: #e9ecef;
+        }
+
+        .example-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .example-text {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Educational Video Generator</h1>
+        <p class="subtitle">Turn your text into engaging educational videos with AI narration</p>
+
+        <div class="input-section">
+            <label for="textInput">Enter Your Educational Content:</label>
+            <textarea 
+                id="textInput" 
+                placeholder="Type or paste your educational content here. The text will be converted into a video with narration...
+
+Example: Welcome to this lesson on photosynthesis. Plants use sunlight to create energy through this amazing process..."
+            ></textarea>
+            <div class="char-count">
+                <span id="charCount">0</span> characters
+            </div>
+        </div>
+
+        <div class="button-section">
+            <button id="generateBtn" onclick="generateVideo()">Generate Video 🎬</button>
+        </div>
+
+        <div id="statusSection" class="status-section">
+            <div id="loadingSpinner" class="spinner"></div>
+            <p id="statusMessage">Generating your video...</p>
+            <button id="downloadBtn" class="download-btn" style="display: none;" onclick="downloadVideo()">
+                Download Video 📥
+            </button>
+        </div>
+
+        <div class="examples">
+            <h3>📝 Example Topics (Click to Use)</h3>
+            <div class="example-item" onclick="useExample(0)">
+                <div class="example-title">Photosynthesis</div>
+                <div class="example-text">Learn how plants convert sunlight into energy</div>
+            </div>
+            <div class="example-item" onclick="useExample(1)">
+                <div class="example-title">Water Cycle</div>
+                <div class="example-text">Understand how water moves through Earth's systems</div>
+            </div>
+            <div class="example-item" onclick="useExample(2)">
+                <div class="example-title">Python Basics</div>
+                <div class="example-text">Introduction to Python programming language</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const examples = [
+            "Welcome to this lesson on photosynthesis. Photosynthesis is the process by which plants convert sunlight into energy. This process occurs in the chloroplasts of plant cells. Plants absorb carbon dioxide from the air and water from the soil. Using sunlight as energy, they combine these to produce glucose and oxygen. The oxygen is released into the atmosphere, which we breathe. This process is essential for life on Earth.",
+            
+            "Today we will learn about the water cycle. The water cycle describes how water moves through Earth's systems. It begins with evaporation, where the sun heats water in oceans, lakes, and rivers. The water vapor rises into the atmosphere. As it cools, it condenses into clouds. When the clouds become heavy, precipitation occurs as rain or snow. The water returns to Earth and flows back into bodies of water, completing the cycle.",
+            
+            "Let's explore the basics of Python programming. Python is a high-level programming language known for its simplicity and readability. It uses indentation to define code blocks, making it easy to read. Python supports multiple programming paradigms including procedural, object-oriented, and functional programming. It has a vast ecosystem of libraries for various tasks. Python is widely used in web development, data science, and artificial intelligence."
+        ];
+
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const generateBtn = document.getElementById('generateBtn');
+        const statusSection = document.getElementById('statusSection');
+        const statusMessage = document.getElementById('statusMessage');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        let currentVideoId = null;
+
+        // Character counter
+        textInput.addEventListener('input', () => {
+            charCount.textContent = textInput.value.length;
+        });
+
+        function useExample(index) {
+            textInput.value = examples[index];
+            charCount.textContent = textInput.value.length;
+            textInput.focus();
+        }
+
+        async function generateVideo() {
+            const text = textInput.value.trim();
+
+            if (!text) {
+                alert('Please enter some text first!');
+                return;
+            }
+
+            if (text.length < 10) {
+                alert('Please enter at least 10 characters.');
+                return;
+            }
+
+            // Show loading state
+            generateBtn.disabled = true;
+            statusSection.classList.add('show');
+            loadingSpinner.style.display = 'block';
+            statusMessage.textContent = 'Generating your video... This may take a minute.';
+            statusMessage.className = '';
+            downloadBtn.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentVideoId = data.video_id;
+                    loadingSpinner.style.display = 'none';
+                    statusMessage.textContent = '✅ Video generated successfully!';
+                    statusMessage.className = 'success-message';
+                    downloadBtn.style.display = 'inline-block';
+                } else {
+                    throw new Error(data.error || 'Failed to generate video');
+                }
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                statusMessage.textContent = '❌ Error: ' + error.message;
+                statusMessage.className = 'error-message';
+            } finally {
+                generateBtn.disabled = false;
+            }
+        }
+
+        function downloadVideo() {
+            if (currentVideoId) {
+                window.location.href = `/api/download/${currentVideoId}`;
+            }
+        }
+
+        // Allow Enter key to submit (with Shift+Enter for new line)
+        textInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && e.ctrlKey) {
+                e.preventDefault();
+                generateVideo();
+            }
+        });
+    </script>
+</body>
+</html>
