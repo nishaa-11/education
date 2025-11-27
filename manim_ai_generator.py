@@ -52,6 +52,35 @@ class ManimAIGenerator:
         
         raise Exception("Failed after all retries")
     
+    def detect_scene_type(self, user_prompt):
+        """Intelligently detect if 3D is needed for this topic"""
+        
+        # Keywords that require 3D
+        require_3d = [
+            'cube', 'sphere', 'pyramid', 'cone', 'cylinder', '3d', 'three dimensional',
+            'solid', 'volume', 'surface', 'rotation in space', 'spatial', 'dimension',
+            'polyhedron', 'prism', 'torus', 'geometry 3d'
+        ]
+        
+        # Keywords that work best in 2D
+        better_2d = [
+            'function', 'graph', 'equation', 'chart', 'diagram', 'flow', 'tree',
+            'network', 'circle', 'square', 'triangle', 'percentage', 'angle',
+            'algebra', 'fraction', 'ratio', 'animation', 'step by step'
+        ]
+        
+        prompt_lower = user_prompt.lower()
+        
+        # Count matches
+        d3_score = sum(1 for keyword in require_3d if keyword in prompt_lower)
+        d2_score = sum(1 for keyword in better_2d if keyword in prompt_lower)
+        
+        # Use 3D only if explicitly needed, default to 2D for speed
+        use_3d = d3_score > d2_score and d3_score > 0
+        
+        print(f"🔍 Scene Type Detection: {'3D detected' if use_3d else '2D selected'} (3D score: {d3_score}, 2D score: {d2_score})")
+        return use_3d
+    
     def elaborate_prompt(self, user_prompt):
         """Step 1: Ask Gemini to elaborate the educational content"""
         
@@ -83,160 +112,120 @@ Narration MUST be SHORT - only 4-5 sentences to fit in 30 seconds.
         
         return elaboration
     
-    def generate_manim_code(self, elaboration):
-        """Step 2: Ask Gemini to generate Manim code"""
+    def generate_manim_code(self, elaboration, use_3d=False):
+        """Step 2: Ask Gemini to generate Manim code with optional 3D support"""
+        
+        # Choose between 2D and 3D instructions
+        if use_3d:
+            scene_type = "ThreeDScene"
+            shape_options = """
+1. **2D Shapes**: Circle, Rectangle, Square, Polygon, Triangle, Line, Arrow, Dot
+2. **3D Shapes**: Sphere, Cube, Cone, Cylinder, Prism, Torus
+   - **IMPORTANT 3D PARAMETERS**:
+     - Sphere: Sphere(radius=1, resolution=(24, 24)) - resolution is tuple (latitude, longitude)
+     - Cube: Cube(side_length=1)
+     - Cone: Cone(base_radius=1, height=2, direction=UP)
+     - Cylinder: Cylinder(radius=1, height=2)
+   - **3D Positioning**: .shift(UP*2), .rotate(PI/4, axis=Z_AXIS), .set_color(BLUE)
+   - **3D Camera - MUST SET FIRST IN construct()**: 
+     * **DEFAULT (BEST for educational content)**: self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES) - STRAIGHT FRONT VIEW, NO TILT
+     * For 45-degree isometric view: self.set_camera_orientation(phi=45*DEGREES, theta=45*DEGREES)
+     * For top view: self.set_camera_orientation(phi=90*DEGREES, theta=0*DEGREES)
+     * For side view: self.set_camera_orientation(phi=0*DEGREES, theta=90*DEGREES)
+     * **NEVER use phi=75, theta=30 or similar - those create unwanted tilt**
+"""
+            camera_setup = """
+# **CRITICAL FOR 3D - SET CAMERA FIRST**:
+# Call set_camera_orientation() IMMEDIATELY FIRST in construct() before creating objects
+# DEFAULT: self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES)  # Front view - no tilt
+# This gives clear, professional educational view - ALWAYS USE THIS UNLESS INSTRUCTED OTHERWISE
+"""
+            forbidden = "**ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber"
+        else:
+            scene_type = "Scene"
+            shape_options = """
+1. **Shapes ONLY**: Circle, Rectangle, Square, Polygon, Triangle, Line, Arrow, Dot
+   - DO NOT use: Arc, Ellipse, Sphere, Cube, Cone, Cylinder, Prism (3D objects)
+"""
+            camera_setup = ""
+            forbidden = "**ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber, Arc, Ellipse"
         
         prompt = f"""
 You are an ADVANCED Manim animator creating PROFESSIONAL educational animations.
 
+SCENE TYPE: {scene_type}
+USE 3D: {'Yes - Maximize 3D effects' if use_3d else 'No - Use 2D only'}
+
 EDUCATIONAL CONTENT TO ANIMATE:
 {elaboration}
 
-YOUR TASK: Create a RICH, ENGAGING animation with professional effects matching the content above.
+YOUR TASK: Generate perfectly formatted Python code that Manim can execute without errors.
+
+OUTPUT FORMAT REQUIREMENTS:
+1. Return ONLY clean Python code - NO markdown, NO explanations, NO comments outside code
+2. Wrap entire code in triple backticks: ```python ... ```
+3. Code MUST be directly executable with: manim -ql script.py EducationScene
+4. ALL code must be within the construct() method
+5. Include # NARRATION: "text" comments for each major animation step
 
 ALLOWED MANIM FEATURES (NOTHING ELSE):
-1. **Shapes ONLY**: Circle, Rectangle, Square, Polygon, Triangle, Line, Arrow, Dot
-   - DO NOT use: Arc, Ellipse (these have complex parameter issues)
+{shape_options}
+
 2. **Text ONLY**: Text() - NEVER Matrix, Tex, MathTex, or anything requiring LaTeX
 3. **Advanced Animations**: 
    - ReplacementTransform (morphing between shapes)
    - Indicate (highlight/pulse effect)
    - Circumscribe (draw box around)
    - Flash (flash effect)
-   - Wiggle (shake effect)
    - Rotate (rotation)
    - FadeIn, FadeOut, Create, Write, GrowFromCenter
+   - For 3D: Rotate with axis parameter, set_camera_orientation()
 4. **Colors & Styles**: 
    - ONLY use these exact Manim colors: RED, BLUE, GREEN, YELLOW, ORANGE, PURPLE, PINK, TEAL, GOLD, WHITE, BLACK, GRAY
-   - DO NOT use: LIGHT_BLUE, DARK_RED, LIGHT_GREEN, etc. (these don't exist in Manim)
-   - For lighter/darker colors: use set_opacity() or set_color_by_gradient()
-   - set_color_by_gradient(BLUE, GREEN)
-   - set_opacity(0.5)
-   - set_fill(BLUE, opacity=0.7)
-   - stroke_width=2 to 10 (ONLY valid parameter for lines/shapes)
+   - set_color(), set_fill(), set_opacity()
+   - stroke_width=2 to 10
 5. **Text Formatting**:
-   - Text("content", font_size=48, color=BLUE) - use this for ALL text including numbers
-   - Use .scale() to resize
-   - NEVER use Matrix() or Tex()
-6. **Grouping**: VGroup to group objects
+   - Text("content", font_size=48, color=BLUE)
+   - Use Unicode for symbols: "x²", "∑", "π", "≈", "×", "÷"
+6. **Grouping**: VGroup, Group
 7. **Positioning**: 
-   - .next_to(obj, UP/DOWN/LEFT/RIGHT)
-   - .shift(UP*2 + RIGHT*3)
-   - .move_to(position)
-   - .arrange(RIGHT/DOWN, buff=0.5)
-8. **Timing**: Total EXACTLY 30 seconds (sum all run_times + waits = 30)
-
-ANIMATION QUALITY GUIDELINES:
-- Use run_time to control speed (faster=0.5, slower=2)
-- Add rate_func=smooth for smooth animations
-- Use lag_ratio=0.1 in VGroup animations for staggered effect
-- Combine multiple animations: self.play(FadeIn(obj1), Create(obj2))
-- **CRITICAL: NEVER use self.wait(0) - minimum wait must be 0.5 seconds**
-
-CRITICAL: AVOID OVERLAPPING (MOST COMMON MISTAKE):
-1. **Clear Before New Content**: Use FadeOut() to remove old objects before showing new ones
-2. **Use Screen Regions**: 
-   - Title area: .to_edge(UP) - keep titles here
-   - Left side: .shift(LEFT*3) or .to_edge(LEFT)
-   - Right side: .shift(RIGHT*3) or .to_edge(RIGHT)
-   - Center: keep minimal, use for main focus
-   - Bottom: .to_edge(DOWN) for explanations
-3. **Spacing**: Use buff=0.5 or buff=1.0 in .arrange() and .next_to()
-4. **One Focus at a Time**: Show ONE main concept per step, hide others
-5. **Test Positioning**: Elements should be at least 1 unit apart
-6. **Scale Wisely**: Keep objects reasonably sized (scale between 0.5 and 1.5)
+   - .shift(UP*2 + RIGHT*3), .move_to(ORIGIN)
+   - .next_to(obj, UP, buff=0.5)
+8. **Timing**: Total EXACTLY 25-30 seconds (all run_times + waits)
 
 CRITICAL RULES (VIOLATION = FAILURE):
 - from manim import *
-- class EducationScene(Scene):
+- class EducationScene({0}):
 - def construct(self):
-- **ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber, Arc, Ellipse
-- **ABSOLUTELY FORBIDDEN PARAMETERS**: dash_length, dash_pattern, angle (in Arc - causes TypeError)
-- **ONLY ALLOWED TEXT**: Text() - use Text("5") not Integer(5), Text("x²") not MathTex
-- For matrices/grids: Create with Rectangle() and Text() manually, NOT Matrix()
-- For equations: Use Text("x + y = 5") with Unicode symbols, NOT Tex or MathTex
-- For circles: Use Circle() only, not Arc()
-- For partial circles: Approximate with Polygon or multiple Line objects, NOT Arc()
-- Total duration: 25-30 seconds (sum of run_times + waits)
-- Add # NARRATION: "exact words" for each step
+- {1}
+- **ABSOLUTELY NO invalid parameters** like uv_resolution, dash_length, angle_in_degrees
+- **MINIMUM wait duration is 0.5 seconds** - NEVER use self.wait(0)
+- Total duration: 25-30 seconds exactly
+- Each animation step must have a # NARRATION: "..." comment
 - Match educational content - no generic code
-- If topic needs math symbols: use Unicode in Text() like "x²", "∑", "π", "≈", "×", "÷"
-- **MINIMUM wait duration is 0.5 seconds - NEVER use self.wait(0), self.wait(0.1), etc.**
+{camera_setup}
+- **FOR 3D SCENES**: IMMEDIATELY in construct(), ADD THIS FIRST LINE BEFORE ALL OBJECTS:
+  self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES)
+  This creates a professional front-view educational perspective. NEVER use phi > 70 or theta < 10 (causes unwanted tilt).
 
-**POSITIONING RULES TO PREVENT OVERLAP**:
-- Title: ALWAYS use .to_edge(UP) and keep at top
-- Main content: Use .shift(LEFT*2) or .shift(RIGHT*2) to separate
-- Labels: Use .next_to(object, direction, buff=0.5) with good spacing
-- Before showing new objects: Use self.play(FadeOut(old_objects))
-- Keep center area MINIMAL - spread content left/right/top/bottom
-- Maximum 3-4 objects visible at once
-- Test: Can you draw a circle around each object without overlapping? If not, reposition!
+SAFETY CHECKS BEFORE RETURNING CODE:
+✓ from manim import * is the first import
+✓ class EducationScene({0}): is defined correctly
+✓ def construct(self): is indented inside the class
+✓ For 3D: self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES) is the FIRST line in construct()
+✓ All animations have run_time and MINIMUM 0.5s wait
+✓ NO invalid parameters (especially uv_resolution, angle_in_degrees, dash_length)
+✓ Total duration is 25-30 seconds
+✓ Code is executable Python
+✓ NO markdown formatting - only code
 
-Return ONLY executable Python code, no markdown, no explanations.
-
-Example with PROPER SPACING (no overlaps):
-```python
-from manim import *
-
-class EducationScene(Scene):
-    def construct(self):
-        # NARRATION: "Let's see how this works"
-        # Step 1: Title at TOP (never overlaps)
-        title = Text("Main Topic", font_size=48, color=YELLOW)
-        title.to_edge(UP)  # Keeps title at top edge
-        self.play(Write(title, run_time=1.5))
-        self.wait(1)
-        
-        # Step 2: First concept on LEFT side
-        # NARRATION: "First, we have this element"
-        concept1 = Circle(radius=0.8, color=BLUE, fill_opacity=0.3)
-        concept1.shift(LEFT*3)  # Far left - no overlap with center
-        label1 = Text("Concept 1", font_size=32).next_to(concept1, DOWN, buff=0.5)
-        self.play(FadeIn(concept1), Write(label1))
-        self.wait(2)
-        
-        # Step 3: Second concept on RIGHT side (concept1 stays visible)
-        # NARRATION: "Next, we introduce this"
-        concept2 = Square(side_length=1.5, color=GREEN, fill_opacity=0.3)
-        concept2.shift(RIGHT*3)  # Far right - no overlap
-        label2 = Text("Concept 2", font_size=32).next_to(concept2, DOWN, buff=0.5)
-        self.play(FadeIn(concept2), Write(label2))
-        self.wait(2)
-        
-        # Step 4: Show interaction in CENTER (fade out old labels to avoid clutter)
-        # NARRATION: "They work together like this"
-        self.play(FadeOut(label1, label2))  # Remove labels to make space
-        arrow = Arrow(concept1.get_right(), concept2.get_left(), color=YELLOW)
-        result = Text("Result!", font_size=36, color=ORANGE)
-        result.move_to(ORIGIN).shift(DOWN*2)  # Bottom center
-        self.play(Create(arrow), Write(result))
-        self.wait(2)
-        
-        # Step 5: Clean up before final message
-        # NARRATION: "And that's how it works"
-        self.play(FadeOut(concept1, concept2, arrow))
-        final = Text("Complete!", font_size=48, color=GREEN)
-        final.move_to(ORIGIN)
-        self.play(Write(final))
-        self.wait(2)
-        
-        # Total: ~25-30 seconds with proper spacing!
-```
-
-KEY SPACING PATTERN:
-- Title: .to_edge(UP)
-- Left concept: .shift(LEFT*3) 
-- Right concept: .shift(RIGHT*3)
-- Center result: ORIGIN or .shift(DOWN*2)
-- Always FadeOut old content before new content
-- Use buff=0.5 or more in .next_to()
-- **CRITICAL: Minimum 0.5 second waits - Never self.wait(0)**
-"""
+Return ONLY the code wrapped in ```python ... ```, nothing else.""".format(scene_type, forbidden)
         
         print("🎨 Step 2: Generating Manim code with AI...")
-        code = self._call_gemini_with_retry(prompt)
+        response = self._call_gemini_with_retry(prompt)
         
-        # Extract code from markdown if present
+        # Extract code from markdown
+        code = response.strip()
         if '```python' in code:
             code = code.split('```python')[1].split('```')[0].strip()
         elif '```' in code:
@@ -357,8 +346,14 @@ KEY SPACING PATTERN:
         
         print(f"✅ Audio merged successfully with FFmpeg!")
     
-    def execute_manim(self, code, output_name="animation"):
-        """Step 3: Execute the Manim code"""
+    def execute_manim(self, code, output_name="animation", use_3d=False):
+        """Step 3: Execute the Manim code
+        
+        Args:
+            code: The Manim Python code to execute
+            output_name: Output filename
+            use_3d: Whether this is a 3D scene (affects rendering)
+        """
         
         print("🎬 Step 3: Executing Manim code...")
         
@@ -377,10 +372,15 @@ KEY SPACING PATTERN:
         # Run Manim
         output_path = self.output_dir / f"{output_name}.mp4"
         
-        # Manim command: render at LOW quality for faster generation
+        # Adjust quality based on 3D (3D takes longer, use lower quality)
+        quality_flag = "-ql"  # Low quality (fast)
+        if not use_3d:
+            quality_flag = "-qm"  # Medium quality for 2D (faster than 3D)
+        
+        # Manim command
         cmd = [
             "manim",
-            "-ql",  # Low quality (fast) - change to -qm for medium or -qh for high quality
+            quality_flag,
             "--format", "mp4",
             "--media_dir", str(self.output_dir),
             "--disable_caching",
@@ -392,11 +392,13 @@ KEY SPACING PATTERN:
         print(f"🚀 Running: {' '.join(cmd)}")
         
         try:
+            # Timeout: 2D is fast (60s), 3D is slower (120s)
+            timeout = 120 if use_3d else 60
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=120,
+                timeout=timeout,
                 cwd=str(temp_dir)
             )
             
@@ -467,7 +469,8 @@ KEY SPACING PATTERN:
                 raise Exception(f"No recent video file found. Checked {len(video_files)} total mp4 files.")
         
         except subprocess.TimeoutExpired:
-            raise Exception("Manim execution timed out (>120s)")
+            timeout_used = 180 if use_3d else 120
+            raise Exception(f"Manim execution timed out (>{timeout_used}s)")
         except Exception as e:
             print(f"❌ Error executing Manim: {e}")
             print(f"\n💡 This might be an issue with the AI-generated code.")
@@ -608,25 +611,36 @@ KEY SPACING PATTERN:
                 pass
             raise e
     
-    def generate_video(self, user_prompt, output_name=None):
-        """Complete pipeline: Prompt → Elaborate → Code → Execute → Add Audio"""
+    def generate_video(self, user_prompt, output_name=None, use_3d=None):
+        """Complete pipeline: Prompt → Elaborate → Code → Execute → Add Audio
+        
+        Args:
+            user_prompt: Topic for animation
+            output_name: Output filename (auto-generated if None)
+            use_3d: Use 3D scenes if True, 2D if False. If None, auto-detect based on topic.
+        """
         
         if output_name is None:
             # Sanitize prompt for filename
             output_name = re.sub(r'[^\w\s-]', '', user_prompt)[:50].strip().replace(' ', '_')
         
+        # Auto-detect scene type if not specified
+        if use_3d is None:
+            use_3d = self.detect_scene_type(user_prompt)
+        
         print(f"\n{'='*60}")
         print(f"🎓 GENERATING VIDEO FOR: {user_prompt}")
+        print(f"📐 Scene Type: {'3D (slower)' if use_3d else '2D (faster)'}{'- ⏱️ ~60s rendering' if not use_3d else '- ⏱️ ~90s rendering'}")
         print(f"{'='*60}\n")
         
         # Step 1: Elaborate
         elaboration = self.elaborate_prompt(user_prompt)
         
-        # Step 2: Generate Manim code
-        manim_code = self.generate_manim_code(elaboration)
+        # Step 2: Generate Manim code with 3D support
+        manim_code = self.generate_manim_code(elaboration, use_3d=use_3d)
         
         # Step 3: Execute Manim
-        video_path = self.execute_manim(manim_code, output_name)
+        video_path = self.execute_manim(manim_code, output_name, use_3d=use_3d)
         
         # Step 4: Extract narration and add audio
         narration = self.extract_narration(manim_code)
@@ -643,7 +657,8 @@ KEY SPACING PATTERN:
             'video_path': video_path,
             'elaboration': elaboration,
             'manim_code': manim_code,
-            'narration': narration
+            'narration': narration,
+            'use_3d': use_3d
         }
 
 

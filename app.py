@@ -40,7 +40,10 @@ def index():
 def generate_video():
     """
     Generate video from text input
-    Body: {"text": "Your educational content here"}
+    Body: {
+        "text": "Your educational content here",
+        "use_3d": true/false (optional, default: auto-detect based on topic)
+    }
     """
     try:
         print("\n📨 /api/generate endpoint called!")
@@ -59,7 +62,10 @@ def generate_video():
             return jsonify({'error': 'No text provided'}), 400
         
         user_prompt = data['text'].strip()
+        use_3d = data.get('use_3d', None)  # None = auto-detect based on topic
+        
         print(f"User prompt: {user_prompt}")
+        print(f"Use 3D: {use_3d if use_3d is not None else 'auto-detect'}")
         
         if not user_prompt:
             return jsonify({'error': 'Text cannot be empty'}), 400
@@ -74,12 +80,13 @@ def generate_video():
         # Update status
         generation_status[video_id] = {
             'status': 'processing',
-            'created_at': datetime.now().isoformat()
+            'created_at': datetime.now().isoformat(),
+            'use_3d': use_3d
         }
         
         # Generate video with full AI pipeline
         print(f"🚀 Calling generator.generate_video()...")
-        result = generator.generate_video(user_prompt, output_name=f"video_{video_id}")
+        result = generator.generate_video(user_prompt, output_name=f"video_{video_id}", use_3d=use_3d)
         print(f"✅ Video generated!")
         
         # Update status
@@ -88,6 +95,7 @@ def generate_video():
             'video_path': result['video_path'],
             'elaboration': result['elaboration'],
             'narration': result['narration'],
+            'use_3d': result['use_3d'],
             'created_at': datetime.now().isoformat()
         }
         
@@ -97,7 +105,8 @@ def generate_video():
             'message': 'Video generated successfully!',
             'download_url': f'/api/download/{video_id}',
             'elaboration': result['elaboration'],
-            'narration': result['narration']
+            'narration': result['narration'],
+            'use_3d': use_3d
         }), 200
         
     except Exception as e:
