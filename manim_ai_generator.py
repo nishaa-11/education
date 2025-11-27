@@ -195,9 +195,9 @@ ALLOWED MANIM FEATURES (NOTHING ELSE):
 
 CRITICAL RULES (VIOLATION = FAILURE):
 - from manim import *
-- class EducationScene({0}):
+- class EducationScene({scene_type}):
 - def construct(self):
-- {1}
+- {forbidden}
 - **ABSOLUTELY NO invalid parameters** like uv_resolution, dash_length, angle_in_degrees
 - **MINIMUM wait duration is 0.5 seconds** - NEVER use self.wait(0)
 - Total duration: 25-30 seconds exactly
@@ -210,7 +210,7 @@ CRITICAL RULES (VIOLATION = FAILURE):
 
 SAFETY CHECKS BEFORE RETURNING CODE:
 ✓ from manim import * is the first import
-✓ class EducationScene({0}): is defined correctly
+✓ class EducationScene({scene_type}): is defined correctly
 ✓ def construct(self): is indented inside the class
 ✓ For 3D: self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES) is the FIRST line in construct()
 ✓ All animations have run_time and MINIMUM 0.5s wait
@@ -219,7 +219,7 @@ SAFETY CHECKS BEFORE RETURNING CODE:
 ✓ Code is executable Python
 ✓ NO markdown formatting - only code
 
-Return ONLY the code wrapped in ```python ... ```, nothing else.""".format(scene_type, forbidden)
+Return ONLY the code wrapped in ```python ... ```, nothing else."""
         
         print("🎨 Step 2: Generating Manim code with AI...")
         response = self._call_gemini_with_retry(prompt)
@@ -538,25 +538,36 @@ Return ONLY the code wrapped in ```python ... ```, nothing else.""".format(scene
         
         print(f"📊 Video duration: {video.duration:.1f}s, Audio duration: {audio.duration:.1f}s")
         
-        # Force both to 30 seconds - trim if longer, extend if shorter
-        target_duration = 30.0
+        # Video duration constraints: 30s minimum, 60s maximum
+        min_duration = 30.0
+        max_duration = 60.0
         
-        if video.duration > target_duration:
-            print(f"✂️ Trimming video from {video.duration:.1f}s to {target_duration:.1f}s")
-            video = video.subclip(0, target_duration)
-        elif video.duration < target_duration:
-            print(f"⚠️ Video is shorter ({video.duration:.1f}s), using as-is")
-            target_duration = video.duration  # Use actual video duration
+        if video.duration > max_duration:
+            print(f"⚠️ Video too long: {video.duration:.1f}s - trimming to {max_duration}s")
+            video = video.subclip(0, max_duration)
+            target_duration = max_duration
+        elif video.duration < min_duration:
+            print(f"⏱️ Video is {video.duration:.1f}s - extending to {min_duration}s")
+            from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
+            # Hold final frame for the remaining duration
+            extended_video = CompositeVideoClip([video])
+            extended_video = extended_video.set_duration(min_duration)
+            video.close()
+            video = extended_video
+            target_duration = min_duration
+        else:
+            target_duration = video.duration
+            print(f"✅ Video duration {target_duration:.1f}s is within 30-60s range")
         
         if audio.duration > target_duration:
             print(f"✂️ Trimming audio from {audio.duration:.1f}s to {target_duration:.1f}s")
             audio = audio.subclip(0, target_duration)
         elif audio.duration < target_duration:
-            print(f"⚠️ Extending audio to {target_duration:.1f}s")
-            from moviepy.audio.AudioClip import CompositeAudioClip
-            from moviepy.audio.AudioClip import AudioClip
+            print(f"🔊 Extending audio to {target_duration:.1f}s with silence padding")
+            from moviepy.audio.AudioClip import CompositeAudioClip, AudioClip
             silence = AudioClip(lambda t: [0, 0], duration=target_duration - audio.duration, fps=audio.fps)
             audio = CompositeAudioClip([audio, silence.set_start(audio.duration)])
+            audio = audio.set_duration(target_duration)
         
         # Set both to exact target duration
         video = video.set_duration(target_duration)
