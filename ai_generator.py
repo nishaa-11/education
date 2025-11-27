@@ -28,7 +28,7 @@ class AIAnimationGenerator:
         if not api_key:
             raise ValueError("Please set GEMINI_API_KEY environment variable or pass gemini_api_key parameter")
         
-        model_name = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
+        model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel(model_name)
         print(f"🤖 Using model: {model_name}")

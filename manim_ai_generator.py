@@ -20,14 +20,14 @@ class ManimAIGenerator:
         if not api_key:
             raise ValueError("GEMINI_API_KEY not found in .env file")
         
-        model_name = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
+        model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel(model_name)
         
         self.output_dir = Path("output")
         self.output_dir.mkdir(exist_ok=True)
         
-        print(f"🤖 Using model: {model_name}")
+        print(f"Using model: {model_name}")
     
     def _call_gemini_with_retry(self, prompt, max_retries=3):
         """Call Gemini API with retry logic for rate limits"""
@@ -128,6 +128,7 @@ ANIMATION QUALITY GUIDELINES:
 - Add rate_func=smooth for smooth animations
 - Use lag_ratio=0.1 in VGroup animations for staggered effect
 - Combine multiple animations: self.play(FadeIn(obj1), Create(obj2))
+- **CRITICAL: NEVER use self.wait(0) - minimum wait must be 0.5 seconds**
 
 CRITICAL: AVOID OVERLAPPING (MOST COMMON MISTAKE):
 1. **Clear Before New Content**: Use FadeOut() to remove old objects before showing new ones
@@ -154,6 +155,7 @@ CRITICAL RULES (VIOLATION = FAILURE):
 - Add # NARRATION: "exact words" for each step
 - Match educational content - no generic code
 - If topic needs math symbols: use Unicode in Text() like "x²", "∑", "π", "≈", "×", "÷"
+- **MINIMUM wait duration is 0.5 seconds - NEVER use self.wait(0), self.wait(0.1), etc.**
 
 **POSITIONING RULES TO PREVENT OVERLAP**:
 - Title: ALWAYS use .to_edge(UP) and keep at top
@@ -222,6 +224,7 @@ KEY SPACING PATTERN:
 - Center result: ORIGIN or .shift(DOWN*2)
 - Always FadeOut old content before new content
 - Use buff=0.5 or more in .next_to()
+- **CRITICAL: Minimum 0.5 second waits - Never self.wait(0)**
 """
         
         print("🎨 Step 2: Generating Manim code with AI...")
