@@ -95,7 +95,8 @@ EDUCATIONAL CONTENT TO ANIMATE:
 YOUR TASK: Create a RICH, ENGAGING animation with professional effects matching the content above.
 
 ALLOWED MANIM FEATURES (NOTHING ELSE):
-1. **Shapes ONLY**: Circle, Rectangle, Square, Polygon, Arc, Ellipse, Triangle, Line, Arrow, Dot
+1. **Shapes ONLY**: Circle, Rectangle, Square, Polygon, Triangle, Line, Arrow, Dot
+   - DO NOT use: Arc, Ellipse (these have complex parameter issues)
 2. **Text ONLY**: Text() - NEVER Matrix, Tex, MathTex, or anything requiring LaTeX
 3. **Advanced Animations**: 
    - ReplacementTransform (morphing between shapes)
@@ -106,11 +107,13 @@ ALLOWED MANIM FEATURES (NOTHING ELSE):
    - Rotate (rotation)
    - FadeIn, FadeOut, Create, Write, GrowFromCenter
 4. **Colors & Styles**: 
-   - Use colors: RED, BLUE, GREEN, YELLOW, ORANGE, PURPLE, PINK, TEAL, GOLD, WHITE
+   - ONLY use these exact Manim colors: RED, BLUE, GREEN, YELLOW, ORANGE, PURPLE, PINK, TEAL, GOLD, WHITE, BLACK, GRAY
+   - DO NOT use: LIGHT_BLUE, DARK_RED, LIGHT_GREEN, etc. (these don't exist in Manim)
+   - For lighter/darker colors: use set_opacity() or set_color_by_gradient()
    - set_color_by_gradient(BLUE, GREEN)
    - set_opacity(0.5)
    - set_fill(BLUE, opacity=0.7)
-   - stroke_width=6
+   - stroke_width=2 to 10 (ONLY valid parameter for lines/shapes)
 5. **Text Formatting**:
    - Text("content", font_size=48, color=BLUE) - use this for ALL text including numbers
    - Use .scale() to resize
@@ -147,10 +150,13 @@ CRITICAL RULES (VIOLATION = FAILURE):
 - from manim import *
 - class EducationScene(Scene):
 - def construct(self):
-- **ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber
+- **ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber, Arc, Ellipse
+- **ABSOLUTELY FORBIDDEN PARAMETERS**: dash_length, dash_pattern, angle (in Arc - causes TypeError)
 - **ONLY ALLOWED TEXT**: Text() - use Text("5") not Integer(5), Text("x²") not MathTex
 - For matrices/grids: Create with Rectangle() and Text() manually, NOT Matrix()
 - For equations: Use Text("x + y = 5") with Unicode symbols, NOT Tex or MathTex
+- For circles: Use Circle() only, not Arc()
+- For partial circles: Approximate with Polygon or multiple Line objects, NOT Arc()
 - Total duration: 25-30 seconds (sum of run_times + waits)
 - Add # NARRATION: "exact words" for each step
 - Match educational content - no generic code
@@ -371,10 +377,10 @@ KEY SPACING PATTERN:
         # Run Manim
         output_path = self.output_dir / f"{output_name}.mp4"
         
-        # Manim command: render at HIGH quality for better visuals
+        # Manim command: render at LOW quality for faster generation
         cmd = [
             "manim",
-            "-qh",  # High quality 1080p (was -ql)
+            "-ql",  # Low quality (fast) - change to -qm for medium or -qh for high quality
             "--format", "mp4",
             "--media_dir", str(self.output_dir),
             "--disable_caching",

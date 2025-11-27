@@ -43,15 +43,23 @@ def generate_video():
     Body: {"text": "Your educational content here"}
     """
     try:
+        print("\n📨 /api/generate endpoint called!")
+        print(f"Request method: {request.method}")
+        print(f"Content-Type: {request.content_type}")
+        
         if generator is None:
+            print("❌ Generator is None!")
             return jsonify({'error': 'Generator not initialized. Check GEMINI_API_KEY in .env'}), 500
         
         data = request.get_json()
+        print(f"Received data: {data}")
         
         if not data or 'text' not in data:
+            print("❌ No text in data!")
             return jsonify({'error': 'No text provided'}), 400
         
         user_prompt = data['text'].strip()
+        print(f"User prompt: {user_prompt}")
         
         if not user_prompt:
             return jsonify({'error': 'Text cannot be empty'}), 400
@@ -61,6 +69,7 @@ def generate_video():
         
         # Generate unique ID
         video_id = str(uuid.uuid4())
+        print(f"📽️ Starting video generation for ID: {video_id}")
         
         # Update status
         generation_status[video_id] = {
@@ -69,8 +78,9 @@ def generate_video():
         }
         
         # Generate video with full AI pipeline
-        print(f"Starting video generation for ID: {video_id}")
+        print(f"🚀 Calling generator.generate_video()...")
         result = generator.generate_video(user_prompt, output_name=f"video_{video_id}")
+        print(f"✅ Video generated!")
         
         # Update status
         generation_status[video_id] = {
@@ -91,7 +101,9 @@ def generate_video():
         }), 200
         
     except Exception as e:
-        print(f"Error generating video: {str(e)}")
+        print(f"❌ Error generating video: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': f'Failed to generate video: {str(e)}'}), 500
 
 

@@ -3,10 +3,15 @@ Manim-based Video Generator
 Uses Manim Community Edition for professional animated educational videos
 """
 import os
+import sys
 from manim import *
 from gtts import gTTS
 import tempfile
 import shutil
+
+# Set FFmpeg path for pydub
+os.environ['FFMPEG_BINARY'] = r'C:\Program Files\FFmpeg\bin\ffmpeg.exe'
+sys.path.insert(0, r'C:\Program Files\FFmpeg\bin')
 
 
 class PhotosynthesisScene(Scene):
