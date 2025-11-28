@@ -151,75 +151,171 @@ Narration MUST be SHORT - only 4-5 sentences to fit in 30 seconds.
             forbidden = "**ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber, Arc, Ellipse"
         
         prompt = f"""
-You are an ADVANCED Manim animator creating PROFESSIONAL educational animations.
+You are an EXPERT Manim Community v0.19.0 animator. Generate CLEAN, EXECUTABLE Python code.
 
 SCENE TYPE: {scene_type}
-USE 3D: {'Yes - Maximize 3D effects' if use_3d else 'No - Use 2D only'}
-
-EDUCATIONAL CONTENT TO ANIMATE:
+EDUCATIONAL CONTENT:
 {elaboration}
 
-YOUR TASK: Generate perfectly formatted Python code that Manim can execute without errors.
+═══════════════════════════════════════════════════════════════
+MANDATORY STRUCTURE (MUST FOLLOW EXACTLY):
+═══════════════════════════════════════════════════════════════
 
-OUTPUT FORMAT REQUIREMENTS:
-1. Return ONLY clean Python code - NO markdown, NO explanations, NO comments outside code
-2. Wrap entire code in triple backticks: ```python ... ```
-3. Code MUST be directly executable with: manim -ql script.py EducationScene
-4. ALL code must be within the construct() method
-5. Include # NARRATION: "text" comments for each major animation step
+from manim import *
 
-ALLOWED MANIM FEATURES (NOTHING ELSE):
-{shape_options}
+class EducationScene({scene_type}):
+    def construct(self):
+        # NARRATION: "Your narration here"
+        # Step 1: Create objects
+        obj = Circle(radius=1, color=BLUE, fill_opacity=0.5)
+        self.play(Create(obj), run_time=2)
+        self.wait(1)
 
-2. **Text ONLY**: Text() - NEVER Matrix, Tex, MathTex, or anything requiring LaTeX
-3. **Advanced Animations**: 
-   - ReplacementTransform (morphing between shapes)
-   - Indicate (highlight/pulse effect)
-   - Circumscribe (draw box around)
-   - Flash (flash effect)
-   - Rotate (rotation)
-   - FadeIn, FadeOut, Create, Write, GrowFromCenter
-   - For 3D: Rotate with axis parameter, set_camera_orientation()
-4. **Colors & Styles**: 
-   - ONLY use these exact Manim colors: RED, BLUE, GREEN, YELLOW, ORANGE, PURPLE, PINK, TEAL, GOLD, WHITE, BLACK, GRAY
-   - set_color(), set_fill(), set_opacity()
-   - stroke_width=2 to 10
-5. **Text Formatting**:
-   - Text("content", font_size=48, color=BLUE)
-   - Use Unicode for symbols: "x²", "∑", "π", "≈", "×", "÷"
-6. **Grouping**: VGroup, Group
-7. **Positioning**: 
-   - .shift(UP*2 + RIGHT*3), .move_to(ORIGIN)
-   - .next_to(obj, UP, buff=0.5)
-8. **Timing**: Total EXACTLY 25-30 seconds (all run_times + waits)
+═══════════════════════════════════════════════════════════════
+ALLOWED MANIM OBJECTS (ONLY USE THESE):
+═══════════════════════════════════════════════════════════════
 
-CRITICAL RULES (VIOLATION = FAILURE):
-- from manim import *
-- class EducationScene({scene_type}):
-- def construct(self):
-- {forbidden}
-- **ABSOLUTELY NO invalid parameters** like uv_resolution, dash_length, angle_in_degrees
-- **MINIMUM wait duration is 0.5 seconds** - NEVER use self.wait(0)
-- Total duration: 25-30 seconds exactly
-- Each animation step must have a # NARRATION: "..." comment
-- Match educational content - no generic code
-{camera_setup}
-- **FOR 3D SCENES**: IMMEDIATELY in construct(), ADD THIS FIRST LINE BEFORE ALL OBJECTS:
-  self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES)
-  This creates a professional front-view educational perspective. NEVER use phi > 70 or theta < 10 (causes unwanted tilt).
+**Basic Shapes:**
+- Circle(radius=1, color=BLUE, fill_opacity=0.5, stroke_width=3)
+- Square(side_length=2, color=RED, fill_opacity=0.7)
+- Rectangle(width=3, height=2, color=GREEN)
+- Triangle() - creates equilateral triangle
+- Polygon(point1, point2, point3, ..., color=YELLOW)
+- Line(start, end, color=WHITE, stroke_width=3)
+- Arrow(start, end, color=ORANGE, stroke_width=3)
+- Dot(radius=0.1, color=PURPLE, fill_opacity=1)
 
-SAFETY CHECKS BEFORE RETURNING CODE:
-✓ from manim import * is the first import
-✓ class EducationScene({scene_type}): is defined correctly
-✓ def construct(self): is indented inside the class
-✓ For 3D: self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES) is the FIRST line in construct()
-✓ All animations have run_time and MINIMUM 0.5s wait
-✓ NO invalid parameters (especially uv_resolution, angle_in_degrees, dash_length)
-✓ Total duration is 25-30 seconds
-✓ Code is executable Python
-✓ NO markdown formatting - only code
+**Text:**
+- Text("Hello", font_size=48, color=WHITE)
+- Use Unicode: "x²", "π", "√", "∑", "∫", "≈", "≤", "≥", "×", "÷"
 
-Return ONLY the code wrapped in ```python ... ```, nothing else."""
+**Groups:**
+- VGroup(obj1, obj2, obj3)
+
+═══════════════════════════════════════════════════════════════
+CORRECT SYNTAX PATTERNS (COPY THESE EXACTLY):
+═══════════════════════════════════════════════════════════════
+
+✅ CORRECT DOT:
+dot = Dot(radius=0.2, color=RED, fill_opacity=1)
+
+❌ WRONG: Dot(ORIGIN, radius=0.2)  # Never pass position as first arg
+
+✅ CORRECT POSITIONING:
+circle = Circle(radius=1)
+circle.shift(UP * 2 + RIGHT * 3)
+circle.move_to(ORIGIN)
+circle.next_to(other_obj, UP, buff=0.5)
+
+✅ CORRECT STYLING:
+obj.set_color(BLUE)
+obj.set_fill(opacity=0.5)  # Note: opacity= not fill_opacity=
+obj.set_stroke(width=3, opacity=0.8)  # Note: opacity= not stroke_opacity=
+# NEVER use fill_opacity= in set_stroke() - it only accepts color, width, opacity
+
+✅ CORRECT ANIMATIONS:
+self.play(Create(obj), run_time=2)
+self.play(FadeIn(obj), run_time=1.5)
+self.play(FadeOut(obj), run_time=1)
+self.play(Write(text), run_time=2)
+self.play(GrowFromCenter(circle), run_time=1.5)
+self.play(ReplacementTransform(obj1, obj2), run_time=2)
+self.play(Indicate(obj), run_time=1)
+self.play(Circumscribe(obj), run_time=2)
+self.play(Flash(obj), run_time=1)
+self.wait(1)  # Minimum 0.5 seconds
+
+✅ CORRECT COLORS (ONLY THESE):
+RED, BLUE, GREEN, YELLOW, ORANGE, PURPLE, PINK, TEAL, GOLD, WHITE, BLACK, GRAY
+
+✅ CORRECT VERTICES:
+triangle = Triangle()
+vertices = triangle.get_vertices()  # Returns list of points
+point_a = vertices[0]
+point_b = vertices[1]
+
+═══════════════════════════════════════════════════════════════
+FORBIDDEN (WILL CAUSE ERRORS):
+═══════════════════════════════════════════════════════════════
+
+❌ NEVER USE THESE:
+- Tex, MathTex, Matrix, LaTeX (causes compilation errors)
+- TracedPath (not in Manim v0.19)
+- normalize(), rotate_vector() (don't exist)
+- get_vertex_coords() (use get_vertices())
+- get_frame() (use get_center() or get_top() instead)
+- config.frame_width, config.frame_height (already defined as FRAME_WIDTH, FRAME_HEIGHT)
+- opacity= in constructors (use fill_opacity=)
+- GRAY_A, LIGHT_GRAY, DARK_GRAY (invalid colors)
+- Dot(point, radius=...) (wrong syntax)
+- self.wait(0) (minimum is 0.5)
+- Complex numpy operations or custom helper functions
+- Method chaining after .animate (e.g., obj.animate.shift().rotate() - use separate play() calls)
+
+❌ NEVER USE THESE PARAMETERS:
+- uv_resolution=
+- dash_length=
+- angle_in_degrees=
+- opacity= in Dot(), Circle(), etc constructors (use fill_opacity=)
+- fill_opacity= in set_stroke() (only accepts color, width, opacity)
+
+═══════════════════════════════════════════════════════════════
+TIMING REQUIREMENTS:
+═══════════════════════════════════════════════════════════════
+
+- Total video: 25-30 seconds
+- Each animation: run_time=1 to 3 seconds
+- Each wait: 0.5 to 2 seconds
+- Add # NARRATION: "..." before each major step
+
+═══════════════════════════════════════════════════════════════
+SIMPLE ANIMATION EXAMPLE (FOLLOW THIS PATTERN):
+═══════════════════════════════════════════════════════════════
+
+```python
+from manim import *
+
+class EducationScene(Scene):
+    def construct(self):
+        # NARRATION: "A circle is a round shape"
+        title = Text("What is a Circle?", font_size=60, color=WHITE)
+        self.play(FadeIn(title), run_time=2)
+        self.wait(1)
+        self.play(FadeOut(title), run_time=1)
+        
+        # NARRATION: "It has a center point"
+        center = Dot(radius=0.15, color=RED, fill_opacity=1)
+        label = Text("Center", font_size=36, color=WHITE)
+        label.next_to(center, DOWN, buff=0.5)
+        self.play(GrowFromCenter(center), run_time=1.5)
+        self.play(FadeIn(label), run_time=1)
+        self.wait(2)
+        
+        # NARRATION: "And all points at equal distance form the circle"
+        circle = Circle(radius=2, color=BLUE, stroke_width=4)
+        self.play(Create(circle), run_time=3)
+        self.wait(2)
+        
+        # NARRATION: "This distance is called the radius"
+        radius = Line(center.get_center(), circle.point_at_angle(0), color=YELLOW, stroke_width=3)
+        radius_text = Text("Radius", font_size=32, color=YELLOW)
+        radius_text.next_to(radius, UP, buff=0.3)
+        self.play(Create(radius), FadeIn(radius_text), run_time=2)
+        self.wait(3)
+```
+
+═══════════════════════════════════════════════════════════════
+YOUR TASK:
+═══════════════════════════════════════════════════════════════
+
+1. Generate SIMPLE, CLEAN code following the example above
+2. Use ONLY allowed shapes and animations
+3. NO complex math, NO custom functions, NO invalid methods
+4. Total duration: 25-30 seconds
+5. Return ONLY code wrapped in ```python ... ```
+6. NO explanations, NO markdown outside code block
+
+Generate the code NOW:"""
         
         print("🎨 Step 2: Generating Manim code with AI...")
         response = self._call_gemini_with_retry(prompt)
@@ -231,7 +327,147 @@ Return ONLY the code wrapped in ```python ... ```, nothing else."""
         elif '```' in code:
             code = code.split('```')[1].split('```')[0].strip()
         
+        # Validate and fix common Manim generation errors
+        code = self._fix_generated_manim_code(code)
+        
         print("✅ Manim code generated!")
+        return code
+    
+    def _fix_generated_manim_code(self, code):
+        """Fix common errors in AI-generated Manim code"""
+        import re
+        
+        # Fix 1: Replace self.camera.animate.set_background_color() with self.camera.background_color =
+        code = re.sub(
+            r'self\.play\(self\.camera\.animate\.set_background_color\(([^)]+)\)',
+            r'self.camera.background_color = \1\n        self.wait(0.5)\n        # Background changed',
+            code
+        )
+        
+        # Fix 2: Remove invalid .animate calls on camera
+        code = code.replace('self.camera.animate', '# self.camera.animate (invalid)')
+        
+        # Fix 3: Replace invalid camera animations with proper background setting
+        code = re.sub(
+            r'self\.play\(\s*self\.camera\.background_color = ([^,)]+)',
+            r'self.camera.background_color = \1\n        self.play(',
+            code
+        )
+        
+        # Fix 4: Fix double fill_fill_opacity (from bad regex replacement)
+        code = code.replace('fill_fill_opacity=', 'fill_opacity=')
+        code = code.replace('stroke_stroke_opacity=', 'stroke_opacity=')
+        
+        # Fix 5: Replace opacity= with fill_opacity= for mobjects, but only if not already fill_opacity
+        # First handle parameters that have opacity= as keyword argument (not already prefixed)
+        code = re.sub(r'(?<!fill_)(?<!stroke_)opacity=', 'fill_opacity=', code)
+        
+        # Fix 6: Remove TracedPath which is not in standard Manim
+        code = code.replace('TracedPath(', '# TracedPath not supported - use Circle instead\n        # Circle(')
+        
+        # Fix 7: Ensure all Dot() calls use proper syntax - remove position as first arg if present
+        # Dot(point, radius=...) -> Dot(radius=...)
+        code = re.sub(
+            r'Dot\s*\(\s*[A-Z_]+[A-Z_0-9]*\s*,\s*',
+            r'Dot(',
+            code
+        )
+        # Also handle Dot with coordinates as first arg
+        code = re.sub(
+            r'Dot\s*\(\s*(?:moving_dot\.get_center\(\)|[a-z_]+\.get_center\(\))\s*,\s*',
+            r'Dot(',
+            code
+        )
+        
+        # Fix 8: Remove config.frame_width and config.frame_height usage (use injected constants)
+        code = code.replace('config.frame_width', 'FRAME_WIDTH')
+        code = code.replace('config.frame_height', 'FRAME_HEIGHT')
+        
+        # Fix 9: Fix invalid color names that aren't in Manim
+        invalid_colors = {
+            'GRAY_A': 'GRAY',
+            'GREY_A': 'GRAY',
+            'LIGHT_GRAY': 'GRAY',
+            'LIGHT_GREY': 'GRAY',
+            'DARK_GRAY': 'GRAY',
+            'DARK_GREY': 'GRAY',
+        }
+        for invalid, valid in invalid_colors.items():
+            code = code.replace(invalid, valid)
+        
+        # Fix 10: Remove .move_to() calls after object creation in same line
+        # Dot(...).move_to(...) -> Dot(...)
+        code = re.sub(
+            r'(Dot\([^)]*\))\.move_to\([^)]*\)',
+            r'\1',
+            code
+        )
+        code = re.sub(
+            r'(Circle\([^)]*\))\.move_to\([^)]*\)',
+            r'\1',
+            code
+        )
+        
+        # Fix 11: Fix DashedLine - ensure stroke_width instead of stroke_opacity in wrong place
+        code = re.sub(
+            r'DashedLine\(([^)]+)\)\.set_stroke\(width=(\d+), fill_opacity=',
+            r'DashedLine(\1).set_stroke(width=\2, opacity=',
+            code
+        )
+        
+        # Fix 12: Remove invalid wait(0) calls - minimum 0.5 seconds
+        code = re.sub(r'self\.wait\(0\)', r'self.wait(0.5)', code)
+        code = re.sub(r'self\.wait\(0\.0\)', r'self.wait(0.5)', code)
+        
+        # Fix 13: Replace get_vertex_coords() with get_vertices()
+        code = code.replace('.get_vertex_coords()', '.get_vertices()')
+        
+        # Fix 14: Remove lines calling normalize() 
+        code = re.sub(r'^.*normalize\(.*$', '# normalize() removed - not available in Manim v0.19', code, flags=re.MULTILINE)
+        
+        # Fix 15: Remove lines calling rotate_vector()
+        code = re.sub(r'^.*rotate_vector\(.*$', '# rotate_vector() removed - not available in Manim v0.19', code, flags=re.MULTILINE)
+        
+        # Fix 16: Fix set_fill() calls - use opacity= not fill_opacity=
+        code = re.sub(r'\.set_fill\(\s*fill_opacity=', '.set_fill(opacity=', code)
+        code = re.sub(r'\.set_fill\(([^,)]+),\s*fill_opacity=', r'.set_fill(\1, opacity=', code)
+        
+        # Fix 17: Fix set_stroke() calls - remove fill_opacity and fix stroke_opacity
+        # Remove fill_opacity= from set_stroke() calls (not a valid parameter)
+        code = re.sub(r'\.set_stroke\(([^)]*),\s*fill_opacity=[^,)]+', r'.set_stroke(\1', code)
+        code = re.sub(r'\.set_stroke\(\s*fill_opacity=[^,)]+,?\s*', '.set_stroke(', code)
+        # Fix stroke_opacity= to opacity=
+        code = re.sub(r'\.set_stroke\(\s*stroke_opacity=', '.set_stroke(opacity=', code)
+        code = re.sub(r'\.set_stroke\(([^,)]+),\s*stroke_opacity=', r'.set_stroke(\1, opacity=', code)
+        
+        # Fix 18: Remove Tex, MathTex, Matrix which require LaTeX
+        code = re.sub(r'(Tex|MathTex|Matrix)\(', r'Text(  # \1 replaced with Text\n        # Text(', code)
+        
+        # Fix 19: Fix invalid parameters in constructors
+        invalid_params = ['uv_resolution=', 'dash_length=', 'angle_in_degrees=']
+        for param in invalid_params:
+            code = re.sub(rf'{param}[^,)]+,?\s*', '', code)
+        
+        # Fix 20: Ensure imports are clean
+        code = re.sub(r'from manim import normalize_vector', '# Invalid import removed', code)
+        code = re.sub(r'import normalize_vector', '# Invalid import removed', code)
+        
+        # Fix 21: Remove variable assignments that call normalize() or rotate_vector()
+        code = re.sub(r'^\s*\w+\s*=.*normalize\(.*$', '# Line removed - normalize() not available', code, flags=re.MULTILINE)
+        code = re.sub(r'^\s*\w+\s*=.*rotate_vector\(.*$', '# Line removed - rotate_vector() not available', code, flags=re.MULTILINE)
+        
+        # Fix 22: Replace complex vector math with simple UP/DOWN/LEFT/RIGHT
+        # If we see any remaining problematic vector operations, comment them out
+        code = re.sub(r'^\s*normal_vector.*$', 'normal_vector_c = UP  # Simplified - complex rotation removed', code, flags=re.MULTILINE)
+        
+        # Fix 23: Remove .get_frame() calls on potentially None objects
+        # Replace variable.get_frame() with safer alternatives
+        code = re.sub(r'\.get_frame\(\)', '.get_center()  # get_frame() replaced', code)
+        
+        # Fix 24: Remove method chaining after .animate that might fail
+        # e.g., obj.animate.method1().method2() -> obj.animate.method1()
+        code = re.sub(r'(\.animate\.[^(]+\([^)]*\))\.[a-zA-Z_]+\(', r'\1  # Chaining removed\n        # .', code)
+        
         return code
     
     def extract_narration(self, code):
@@ -360,6 +596,18 @@ Return ONLY the code wrapped in ```python ... ```, nothing else."""
         # Create temporary Python file
         temp_dir = Path(tempfile.gettempdir()) / "manim_ai"
         temp_dir.mkdir(exist_ok=True)
+        
+        # Fix: Inject FRAME_WIDTH and FRAME_HEIGHT definitions if they are missing
+        # This fixes NameError: name 'FRAME_WIDTH' is not defined in newer Manim versions
+        if "from manim import *" in code:
+            code = code.replace(
+                "from manim import *", 
+                "from manim import *\n\n# Fix for Manim versions where these are not exported\nFRAME_WIDTH = 14.0  # Default Manim frame width\nFRAME_HEIGHT = 8.0  # Default Manim frame height\nFRAME_X_RADIUS = 7.0\nFRAME_Y_RADIUS = 4.0\n"
+            )
+        
+        # Remove any problematic imports that might be in the generated code
+        code = code.replace("from manim.utils.space_ops import normalize_vector\n", "")
+        code = code.replace("from manim.utils.space_ops import normalize_vector", "")
         
         code_file = temp_dir / "scene.py"
         code_file.write_text(code, encoding='utf-8')
