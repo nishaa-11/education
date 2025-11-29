@@ -113,46 +113,13 @@ Narration MUST be SHORT - only 4-5 sentences to fit in 30 seconds.
     
     def generate_manim_code(self, elaboration, use_3d=False):
         """Step 2: Ask Gemini to generate Manim code with optional 3D support"""
-        
+
         # Choose between 2D and 3D instructions
         if use_3d:
             scene_type = "ThreeDScene"
-            # These variables are defined for future use in enhanced prompts
-            _shape_options = """
-1. **2D Shapes**: Circle, Rectangle, Square, Polygon, Triangle, Line, Arrow, Dot
-2. **3D Shapes**: Sphere, Cube, Cone, Cylinder, Prism, Torus
-   - **IMPORTANT 3D PARAMETERS**:
-     - Sphere: Sphere(radius=1, resolution=(24, 24)) - resolution is tuple (latitude, longitude)
-     - Cube: Cube(side_length=1)
-     - Cone: Cone(base_radius=1, height=2, direction=UP)
-     - Cylinder: Cylinder(radius=1, height=2)
-   - **3D Positioning**: .shift(UP*2), .rotate(PI/4, axis=Z_AXIS), .set_color(BLUE)
-   - **3D Camera - MUST SET FIRST IN construct()**: 
-     * **DEFAULT (BEST for educational content)**: self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES) - STRAIGHT FRONT VIEW, NO TILT
-     * For 45-degree isometric view: self.set_camera_orientation(phi=45*DEGREES, theta=45*DEGREES)
-     * For top view: self.set_camera_orientation(phi=90*DEGREES, theta=0*DEGREES)
-     * For side view: self.set_camera_orientation(phi=0*DEGREES, theta=90*DEGREES)
-     * **NEVER use phi=75, theta=30 or similar - those create unwanted tilt**
-"""
-            _camera_setup = """
-# **CRITICAL FOR 3D - SET CAMERA FIRST**:
-# Call set_camera_orientation() IMMEDIATELY FIRST in construct() before creating objects
-# DEFAULT: self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES)  # Front view - no tilt
-# This gives clear, professional educational view - ALWAYS USE THIS UNLESS INSTRUCTED OTHERWISE
-"""
-            _forbidden = "**ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber"
-            # Silence unused variable warnings
-            _ = (_shape_options, _camera_setup, _forbidden)
         else:
             scene_type = "Scene"
-            _shape_options = """
-1. **Shapes ONLY**: Circle, Rectangle, Square, Polygon, Triangle, Line, Arrow, Dot
-   - DO NOT use: Arc, Ellipse, Sphere, Cube, Cone, Cylinder, Prism (3D objects)
-"""
-            _camera_setup = ""
-            _forbidden = "**ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber, Arc, Ellipse"
-            _ = (_shape_options, _camera_setup, _forbidden)
-        
+
         prompt = f"""
 You are an EXPERT Manim Community v0.19.0 animator. Generate CLEAN, EXECUTABLE Python code.
 
@@ -621,9 +588,6 @@ Generate the code NOW:"""
         print("--- END CODE ---\n")
 
         # Run Manim
-        # Note: output_path is the intended location; actual video is found dynamically
-        _ = self.output_dir / f"{output_name}.mp4"
-
         # Adjust quality based on 3D (3D takes longer, use lower quality)
         quality_flag = "-ql"  # Low quality (fast)
         if not use_3d:
