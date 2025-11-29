@@ -5,11 +5,10 @@ Each element is generated separately and composited
 """
 import os
 import numpy as np
-from moviepy.editor import VideoClip, CompositeVideoClip, AudioFileClip, concatenate_videoclips
+from moviepy import VideoClip, AudioFileClip
 from PIL import Image, ImageDraw
 from gtts import gTTS
 import math
-import xml.etree.ElementTree as ET
 
 
 class SVGAnimationGenerator:
@@ -328,10 +327,11 @@ class SVGAnimationGenerator:
         title = self.create_text_overlay("Photosynthesis", duration, position='top', font_size=72)
         
         # Equation
-        equation = self.create_text_overlay("6CO₂ + 6H₂O + Light → C₆H₁₂O₆ + 6O₂", 
+        equation = self.create_text_overlay("6CO₂ + 6H₂O + Light → C₆H₁₂O₆ + 6O₂",
                                           duration, position='bottom', font_size=42)
-        
+
         print("Compositing layers...")
+
         # Composite all layers - convert RGBA to RGB for MoviePy compatibility
         def convert_to_rgb(clip):
             """Convert RGBA frames to RGB"""
@@ -382,13 +382,14 @@ class SVGAnimationGenerator:
     def detect_content_type(self, text):
         """Detect content type"""
         text_lower = text.lower()
-        
+
         # Photosynthesis detection - broader keywords
-        if any(word in text_lower for word in ['photosynthesis', 'plant', 'chlorophyll', 'leaf', 'leaves', 
-                                                'sunlight', 'carbon dioxide', 'co2', 'oxygen', 'o2',
-                                                'glucose', 'green', 'sun', 'light energy']):
+        photosynthesis_keywords = ['photosynthesis', 'plant', 'chlorophyll', 'leaf', 'leaves',
+                                   'sunlight', 'carbon dioxide', 'co2', 'oxygen', 'o2',
+                                   'glucose', 'green', 'sun', 'light energy']
+        if any(word in text_lower for word in photosynthesis_keywords):
             return 'photosynthesis'
-        
+
         return None
     
     def generate_video(self, text, output_filename="educational_video.mp4"):

@@ -3,7 +3,6 @@ AI-Powered Manim Video Generator
 Pipeline: User Prompt → Gemini Elaborates → Gemini Generates Manim Code → Execute → Video
 """
 import os
-import json
 import re
 import subprocess
 import tempfile
@@ -114,42 +113,13 @@ Narration MUST be SHORT - only 4-5 sentences to fit in 30 seconds.
     
     def generate_manim_code(self, elaboration, use_3d=False):
         """Step 2: Ask Gemini to generate Manim code with optional 3D support"""
-        
+
         # Choose between 2D and 3D instructions
         if use_3d:
             scene_type = "ThreeDScene"
-            shape_options = """
-1. **2D Shapes**: Circle, Rectangle, Square, Polygon, Triangle, Line, Arrow, Dot
-2. **3D Shapes**: Sphere, Cube, Cone, Cylinder, Prism, Torus
-   - **IMPORTANT 3D PARAMETERS**:
-     - Sphere: Sphere(radius=1, resolution=(24, 24)) - resolution is tuple (latitude, longitude)
-     - Cube: Cube(side_length=1)
-     - Cone: Cone(base_radius=1, height=2, direction=UP)
-     - Cylinder: Cylinder(radius=1, height=2)
-   - **3D Positioning**: .shift(UP*2), .rotate(PI/4, axis=Z_AXIS), .set_color(BLUE)
-   - **3D Camera - MUST SET FIRST IN construct()**: 
-     * **DEFAULT (BEST for educational content)**: self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES) - STRAIGHT FRONT VIEW, NO TILT
-     * For 45-degree isometric view: self.set_camera_orientation(phi=45*DEGREES, theta=45*DEGREES)
-     * For top view: self.set_camera_orientation(phi=90*DEGREES, theta=0*DEGREES)
-     * For side view: self.set_camera_orientation(phi=0*DEGREES, theta=90*DEGREES)
-     * **NEVER use phi=75, theta=30 or similar - those create unwanted tilt**
-"""
-            camera_setup = """
-# **CRITICAL FOR 3D - SET CAMERA FIRST**:
-# Call set_camera_orientation() IMMEDIATELY FIRST in construct() before creating objects
-# DEFAULT: self.set_camera_orientation(phi=0*DEGREES, theta=0*DEGREES)  # Front view - no tilt
-# This gives clear, professional educational view - ALWAYS USE THIS UNLESS INSTRUCTED OTHERWISE
-"""
-            forbidden = "**ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber"
         else:
             scene_type = "Scene"
-            shape_options = """
-1. **Shapes ONLY**: Circle, Rectangle, Square, Polygon, Triangle, Line, Arrow, Dot
-   - DO NOT use: Arc, Ellipse, Sphere, Cube, Cone, Cylinder, Prism (3D objects)
-"""
-            camera_setup = ""
-            forbidden = "**ABSOLUTELY FORBIDDEN**: Matrix, Tex, MathTex, SVGMobject, ImageMobject, Integer, DecimalNumber, Arc, Ellipse"
-        
+
         prompt = f"""
 You are an EXPERT Manim Community v0.19.0 animator. Generate CLEAN, EXECUTABLE Python code.
 
@@ -561,26 +531,26 @@ Generate the code NOW:"""
                 output_path
             ]
         
-        print(f"🚀 Running FFmpeg merge...")
+        print("🚀 Running FFmpeg merge...")
         result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
-        
+
         if result.returncode != 0:
             print(f"❌ FFmpeg failed: {result.stderr}")
             raise Exception(f"FFmpeg merge failed: {result.stderr}")
-        
+
         # Replace original with merged version
         if os.path.exists(video_path):
             os.remove(video_path)
         os.rename(output_path, video_path)
-        
+
         # Cleanup temp audio
         try:
             if audio_path and os.path.exists(audio_path):
                 os.unlink(audio_path)
         except:
             pass
-        
-        print(f"✅ Audio merged successfully with FFmpeg!")
+
+        print("✅ Audio merged successfully with FFmpeg!")
     
     def execute_manim(self, code, output_name="animation", use_3d=False):
         """Step 3: Execute the Manim code
@@ -616,10 +586,8 @@ Generate the code NOW:"""
         print("\n--- GENERATED CODE ---")
         print(code)
         print("--- END CODE ---\n")
-        
+
         # Run Manim
-        output_path = self.output_dir / f"{output_name}.mp4"
-        
         # Adjust quality based on 3D (3D takes longer, use lower quality)
         quality_flag = "-ql"  # Low quality (fast)
         if not use_3d:
@@ -683,72 +651,72 @@ Generate the code NOW:"""
                 # Get the most recently created video
                 latest_video = max(recent_videos, key=lambda p: p.stat().st_mtime)
                 final_path = self.output_dir / f"{output_name}.mp4"
-                
+
                 # Ensure source file is fully written
-                print(f"⏳ Waiting for file to be fully written...")
+                print("⏳ Waiting for file to be fully written...")
                 time.sleep(0.5)
-                
+
                 # Copy to output directory
                 shutil.copy2(latest_video, final_path)
-                
+
                 # Verify the copy is readable
                 if not final_path.exists() or final_path.stat().st_size < 1000:
                     raise Exception(f"Copied file is invalid: {final_path}")
-                
+
                 print(f"✅ Video saved: {final_path}")
                 print(f"📂 Original: {latest_video}")
                 print(f"📊 Size: {final_path.stat().st_size / 1024:.1f} KB")
-                
+
                 # Give the OS a moment to release file handles
                 time.sleep(0.5)
-                
+
                 return str(final_path)
             else:
                 # Detailed debug info
                 print("\n❌ No recent video found!")
-                print(f"Searched in:")
+                print("Searched in:")
                 print(f"  - {temp_dir}")
                 print(f"  - {self.output_dir}")
                 print(f"\nAll .mp4 files found: {len(video_files)}")
                 for vf in video_files[:5]:  # Show first 5
                     age = current_time - vf.stat().st_mtime
                     print(f"  - {vf} (age: {age:.0f}s)")
-                
+
                 raise Exception(f"No recent video file found. Checked {len(video_files)} total mp4 files.")
-        
+
         except subprocess.TimeoutExpired:
             timeout_used = 180 if use_3d else 120
             raise Exception(f"Manim execution timed out (>{timeout_used}s)")
         except Exception as e:
             print(f"❌ Error executing Manim: {e}")
-            print(f"\n💡 This might be an issue with the AI-generated code.")
-            print(f"📝 Check the generated code above for errors.")
+            print("💡 This might be an issue with the AI-generated code.")
+            print("📝 Check the generated code above for errors.")
             raise
     
     def add_audio_to_video(self, video_path, narration):
         """Add narration audio to video using gTTS"""
         from gtts import gTTS
-        from moviepy.editor import VideoFileClip, AudioFileClip, concatenate_videoclips
+        from moviepy import VideoFileClip, AudioFileClip
         import tempfile
         import os
         import time
-        
+
         print("\n🎵 Adding narration audio...")
-        
+
         # Validate video file is readable BEFORE attempting audio merge
         print(f"🔍 Validating video file: {video_path}")
         if not os.path.exists(video_path):
             raise Exception(f"Video file not found: {video_path}")
-        
+
         file_size = os.path.getsize(video_path)
         print(f"📊 Video file size: {file_size / 1024:.1f} KB")
-        
+
         if file_size < 1000:
             raise Exception(f"Video file too small ({file_size} bytes), likely corrupted")
-        
+
         # Wait a moment to ensure file is fully written and released by Manim
         time.sleep(1)
-        
+
         # Try to load video with retry logic
         max_retries = 3
         video = None
@@ -768,10 +736,10 @@ Generate the code NOW:"""
                     print(f"Error: {e}")
                     # Try using FFmpeg directly as fallback
                     print("🔧 Attempting FFmpeg direct merge as fallback...")
-                    return self._add_audio_with_ffmpeg(video_path, narration, temp_audio.name if 'temp_audio' in locals() else None)
+                    return self._add_audio_with_ffmpeg(video_path, narration, None)
                 print(f"⚠️ Attempt {attempt + 1} failed, retrying in 2 seconds...")
                 time.sleep(2)
-        
+
         # If we got here, video loaded successfully
         if video is None:
             raise Exception("Video failed to load")
@@ -796,7 +764,7 @@ Generate the code NOW:"""
             target_duration = max_duration
         elif video.duration < min_duration:
             print(f"⏱️ Video is {video.duration:.1f}s - extending to {min_duration}s")
-            from moviepy.video.compositing.CompositeVideoClip import CompositeVideoClip
+            from moviepy import CompositeVideoClip
             # Hold final frame for the remaining duration
             extended_video = CompositeVideoClip([video])
             extended_video = extended_video.set_duration(min_duration)
@@ -812,7 +780,7 @@ Generate the code NOW:"""
             audio = audio.subclip(0, target_duration)
         elif audio.duration < target_duration:
             print(f"🔊 Extending audio to {target_duration:.1f}s with silence padding")
-            from moviepy.audio.AudioClip import CompositeAudioClip, AudioClip
+            from moviepy import CompositeAudioClip, AudioClip
             silence = AudioClip(lambda t: [0, 0], duration=target_duration - audio.duration, fps=audio.fps)
             audio = CompositeAudioClip([audio, silence.set_start(audio.duration)])
             audio = audio.set_duration(target_duration)
@@ -856,7 +824,7 @@ Generate the code NOW:"""
             except:
                 pass
             
-            print(f"✅ Audio added to video!")
+            print("✅ Audio added to video!")
             
         except Exception as e:
             # Cleanup on error
@@ -887,10 +855,10 @@ Generate the code NOW:"""
         if use_3d is None:
             use_3d = self.detect_scene_type(user_prompt)
         
-        print(f"\n{'='*60}")
+        print("\n" + "="*60)
         print(f"🎓 GENERATING VIDEO FOR: {user_prompt}")
         print(f"📐 Scene Type: {'3D (slower)' if use_3d else '2D (faster)'}{'- ⏱️ ~60s rendering' if not use_3d else '- ⏱️ ~90s rendering'}")
-        print(f"{'='*60}\n")
+        print("="*60 + "\n")
         
         # Step 1: Elaborate
         elaboration = self.elaborate_prompt(user_prompt)
@@ -905,12 +873,12 @@ Generate the code NOW:"""
         narration = self.extract_narration(manim_code)
         if narration:
             self.add_audio_to_video(video_path, narration)
-        
-        print(f"\n{'='*60}")
-        print(f"✅ COMPLETE!")
+
+        print("\n" + "="*60)
+        print("✅ COMPLETE!")
         print(f"📹 Video: {video_path}")
         print(f"🗣️ Narration: {narration}")
-        print(f"{'='*60}\n")
+        print("="*60 + "\n")
         
         return {
             'video_path': video_path,

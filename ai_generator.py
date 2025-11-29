@@ -5,8 +5,8 @@ Uses Gemini API to generate custom animations for any topic
 import os
 import json
 from gtts import gTTS
-from moviepy.editor import AudioFileClip, VideoClip
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from moviepy import AudioFileClip, VideoClip
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import math
 import google.generativeai as genai
@@ -366,7 +366,7 @@ Return ONLY valid JSON, no other text.
         video = video.set_audio(audio_clip)
         
         output_path = os.path.join(self.output_dir, output_filename)
-        print(f"💾 Encoding video...")
+        print("💾 Encoding video...")
         video.write_videofile(output_path, fps=24, codec='libx264',
                              preset='ultrafast', threads=4, audio_codec='aac')
         

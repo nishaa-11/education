@@ -5,9 +5,8 @@ Creates animated visual elements based on content
 """
 import os
 from gtts import gTTS
-from moviepy.editor import (
-    AudioFileClip, CompositeVideoClip, 
-    concatenate_videoclips, ColorClip, ImageClip, VideoClip
+from moviepy import (
+    AudioFileClip, concatenate_videoclips, VideoClip
 )
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
@@ -255,7 +254,6 @@ class VideoGenerator:
                 # Draw falling rain
                 self.draw_water_drops(draw, t, width, height)
                 # Draw ocean waves at bottom
-                wave_height = 50
                 for i in range(0, width, 20):
                     wave_y = height - 100 + math.sin((i + t * 100) * 0.02) * 15
                     draw.ellipse([i-10, wave_y-10, i+10, wave_y+10], fill='#4169E1')
@@ -313,10 +311,10 @@ class VideoGenerator:
             # Animation parameters for text
             fade_duration = 0.5
             if t < fade_duration:
-                opacity = int(255 * (t / fade_duration))
+                alpha = int(255 * (t / fade_duration))
             else:
-                opacity = 255
-            
+                alpha = 255
+
             # Calculate text position (bottom half of screen)
             try:
                 bbox = draw.textbbox((0, 0), wrapped_text, font=font)
@@ -325,18 +323,18 @@ class VideoGenerator:
             except:
                 text_width = 400
                 text_height = 100
-            
+
             x = (width - text_width) // 2
             y = height - text_height - 80
-            
+
             # Draw text background for readability
             padding = 20
-            draw.rectangle([x - padding, y - padding, 
+            draw.rectangle([x - padding, y - padding,
                           x + text_width + padding, y + text_height + padding],
                          fill=(0, 0, 0, 180))
-            
-            # Draw text
-            draw.text((x, y), wrapped_text, font=font, fill='white', align='center')
+
+            # Draw text with fade-in effect
+            draw.text((x, y), wrapped_text, font=font, fill=(255, 255, 255, alpha), align='center')
             
             return np.array(img)
         
@@ -361,7 +359,7 @@ class VideoGenerator:
             img = Image.new('RGB', (width, height), (darkness, darkness, darkness))
             return np.array(img)
         
-        from moviepy.editor import VideoClip
+        from moviepy import VideoClip
         return VideoClip(make_frame, duration=duration)
     
     def generate_video(self, text, output_filename="educational_video.mp4"):
