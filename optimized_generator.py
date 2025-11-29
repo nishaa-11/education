@@ -5,7 +5,7 @@ No external dependencies beyond Python packages
 """
 import os
 import numpy as np
-from moviepy.editor import VideoClip, CompositeVideoClip, AudioFileClip
+from moviepy import VideoClip, AudioFileClip
 from PIL import Image, ImageDraw, ImageFilter
 from gtts import gTTS
 import math
@@ -308,7 +308,6 @@ class OptimizedVideoGenerator:
                 pixels[x, y] = (r, g, b)
         
         bg_array = np.array(bg_img)
-        bg = VideoClip(lambda t: bg_array, duration=duration)
         
         # Create all elements (fewer particles)
         sun = self.create_optimized_sun(duration)
@@ -340,7 +339,7 @@ class OptimizedVideoGenerator:
         video = video.set_audio(audio_clip)
         
         output_path = os.path.join(self.output_dir, output_filename)
-        print(f"💾 Encoding video...")
+        print("💾 Encoding video...")
         video.write_videofile(output_path, fps=24, codec='libx264',
                              preset='ultrafast', threads=4, audio_codec='aac')
         

@@ -5,7 +5,6 @@ Much faster and higher quality than PIL
 """
 import os
 import subprocess
-import json
 from gtts import gTTS
 from pathlib import Path
 
@@ -26,11 +25,12 @@ class ThreeJSVideoGenerator:
     def detect_content_type(self, text):
         """Detect content type"""
         text_lower = text.lower()
-        
-        if any(word in text_lower for word in ['photosynthesis', 'plant', 'chlorophyll', 'leaf', 
-                                                'sunlight', 'carbon dioxide', 'co2', 'oxygen']):
+
+        keywords = ['photosynthesis', 'plant', 'chlorophyll', 'leaf',
+                    'sunlight', 'carbon dioxide', 'co2', 'oxygen']
+        if any(word in text_lower for word in keywords):
             return 'photosynthesis'
-        
+
         return 'default'
     
     def render_threejs_video(self, animation_type, duration, output_path):
@@ -149,7 +149,7 @@ const path = require('path');
         audio_path = self.generate_audio(text)
         
         # Get audio duration
-        from moviepy.editor import AudioFileClip
+        from moviepy import AudioFileClip
         audio_clip = AudioFileClip(audio_path)
         duration = audio_clip.duration
         audio_clip.close()

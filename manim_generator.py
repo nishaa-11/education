@@ -176,8 +176,7 @@ class DNAScene(Scene):
         # Create DNA double helix
         helix_points_1 = []
         helix_points_2 = []
-        base_pairs = []
-        
+
         t_values = np.linspace(0, 4*PI, 40)
         for t in t_values:
             x = t - 2*PI
@@ -337,7 +336,7 @@ class ManimVideoGenerator:
             audio_path = self.generate_audio(text)
             
             # Combine video and audio using MoviePy
-            from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip
+            from moviepy import VideoFileClip, AudioFileClip
             
             video_clip = VideoFileClip(video_path)
             audio_clip = AudioFileClip(audio_path)

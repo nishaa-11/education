@@ -85,9 +85,9 @@ def generate_video():
         }
         
         # Generate video with full AI pipeline
-        print(f"🚀 Calling generator.generate_video()...")
+        print("🚀 Calling generator.generate_video()...")
         result = generator.generate_video(user_prompt, output_name=f"video_{video_id}", use_3d=use_3d)
-        print(f"✅ Video generated!")
+        print("✅ Video generated!")
         
         # Update status
         generation_status[video_id] = {
